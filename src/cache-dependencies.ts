@@ -104,7 +104,7 @@ export function tryDeleteFiles(filePaths: string[]): boolean {
 }
 
 function isDependenciesCacheDisabled(): boolean {
-    return !github.inputBoolean('dependencies-cache-enabled', false)
+    return !github.inputBoolean('dependencies-cache-enabled', true)
 }
 
 export function inputCacheKeyGlobs(input: string): string[] {
