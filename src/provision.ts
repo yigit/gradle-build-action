@@ -21,6 +21,8 @@ export async function gradleVersion(version: string): Promise<string> {
             return gradleCurrent()
         case 'rc':
             return gradleReleaseCandidate()
+        case 'milestone':
+            return gradleMilestone()
         case 'nightly':
             return gradleNightly()
         case 'release-nightly':
@@ -31,9 +33,7 @@ export async function gradleVersion(version: string): Promise<string> {
 }
 
 async function gradleCurrent(): Promise<string> {
-    const versionInfo = await gradleVersionDeclaration(
-        `${gradleVersionsBaseUrl}/current`
-    )
+    const versionInfo = await findCurrent()
     return provisionGradle(versionInfo.version, versionInfo.downloadUrl)
 }
 
@@ -48,17 +48,34 @@ async function gradleReleaseCandidate(): Promise<string> {
     return gradleCurrent()
 }
 
-async function gradleNightly(): Promise<string> {
-    const versionInfo = await gradleVersionDeclaration(
-        `${gradleVersionsBaseUrl}/nightly`
+async function gradleMilestone(): Promise<string> {
+    const currentInfo = await findCurrent()
+    const milestoneInfo = await findGradleVersionDeclarationFor(
+        (candidate: GradleVersionInfo) => {
+            return candidate.milestoneFor.toString().length > 0
+        }
     )
+    if (milestoneInfo && milestoneInfo.version && milestoneInfo.downloadUrl) {
+        const sorted = [currentInfo.version, milestoneInfo.version].sort()
+        const hasRecentMilestone = sorted[0] === milestoneInfo.version
+        if (hasRecentMilestone) {
+            return provisionGradle(
+                milestoneInfo.version,
+                milestoneInfo.downloadUrl
+            )
+        }
+    }
+    core.info('No current milestone found, will fallback to current')
+    return gradleCurrent()
+}
+
+async function gradleNightly(): Promise<string> {
+    const versionInfo = await findGradleNightly()
     return provisionGradle(versionInfo.version, versionInfo.downloadUrl)
 }
 
 async function gradleReleaseNightly(): Promise<string> {
-    const versionInfo = await gradleVersionDeclaration(
-        `${gradleVersionsBaseUrl}/release-nightly`
-    )
+    const versionInfo = await findGradleReleaseNightly()
     return provisionGradle(versionInfo.version, versionInfo.downloadUrl)
 }
 
@@ -76,15 +93,33 @@ async function gradleVersionDeclaration(
     return await httpGetGradleVersion(url)
 }
 
-async function findGradleVersionDeclaration(
+async function findCurrent(): Promise<GradleVersionInfo> {
+    return gradleVersionDeclaration(`${gradleVersionsBaseUrl}/current`)
+}
+
+export async function findGradleNightly(): Promise<GradleVersionInfo> {
+    return gradleVersionDeclaration(`${gradleVersionsBaseUrl}/nightly`)
+}
+
+export async function findGradleReleaseNightly(): Promise<GradleVersionInfo> {
+    return gradleVersionDeclaration(`${gradleVersionsBaseUrl}/release-nightly`)
+}
+
+export async function findGradleVersionDeclaration(
     version: string
+): Promise<GradleVersionInfo | undefined> {
+    return findGradleVersionDeclarationFor((entry: GradleVersionInfo) => {
+        return entry.version === version
+    })
+}
+
+async function findGradleVersionDeclarationFor(
+    predicate: (candidate: GradleVersionInfo) => boolean
 ): Promise<GradleVersionInfo | undefined> {
     const gradleVersions = await httpGetGradleVersions(
         `${gradleVersionsBaseUrl}/all`
     )
-    return gradleVersions.find((entry: GradleVersionInfo) => {
-        return entry.version === version
-    })
+    return gradleVersions.find(predicate)
 }
 
 async function provisionGradle(version: string, url: string): Promise<string> {
@@ -173,4 +208,5 @@ async function extractZip(zip: string, destination: string): Promise<void> {
 interface GradleVersionInfo {
     version: string
     downloadUrl: string
+    milestoneFor: string
 }

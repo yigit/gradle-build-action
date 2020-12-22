@@ -61,7 +61,7 @@ If you need to pass environment variables, simply use the GitHub Actions workflo
 ```
 
 ## Use a Gradle wrapper from a different directory
- 
+
 ```yaml
  - uses: eskatos/gradle-command-action@v1
    with:
@@ -93,6 +93,7 @@ Moreover, you can use the following aliases:
 | `wrapper`      | The Gradle wrapper's version (default, useful for matrix builds) |
 | `current`      | The current [stable release](https://gradle.org/install/) |
 | `rc`      | The current [release candidate](https://gradle.org/release-candidate/) if any, otherwise fallback to `current` |
+| `milestone` | The current _milestone release_ if any, otherwise fallback to `current` |
 | `nightly` | The latest [nightly](https://gradle.org/nightly/), fails if none. |
 | `release-nightly` | The latest [release nightly](https://gradle.org/release-nightly/), fails if none.      |
 
