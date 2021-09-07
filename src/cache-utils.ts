@@ -51,16 +51,10 @@ function generateCacheKey(cacheName: string): CacheKey {
 }
 
 function determineJobContext(): string {
-    // Ideally we'd serialize the entire matrix values here, but matrix is not available within the action invocation.
-    // Use the JAVA_HOME value as a proxy for the java version
-    const javaHome = process.env['JAVA_HOME'] || ''
-
-    // Approximate overall context based on the first gradle invocation in the Job
-    const args = core.getInput('arguments')
-    const buildRootDirectory = core.getInput('build-root-directory')
-    const gradleVersion = core.getInput('gradle-version')
-
-    return hashStrings([javaHome, args, buildRootDirectory, gradleVersion])
+    const workflowJobContext = core.getInput('workflow-job-context')
+    // TODO: Remove this debug logging
+    core.info(`Creating cache key with job context: ${workflowJobContext}`)
+    return hashStrings([workflowJobContext])
 }
 
 export function hashStrings(values: string[]): string {
