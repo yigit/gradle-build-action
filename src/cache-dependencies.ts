@@ -21,6 +21,12 @@ export async function restoreCachedDependencies(
     core.saveState(DEPENDENCIES_CACHE_PATH, cachePath)
 
     const inputCacheExact = core.getBooleanInput('dependencies-cache-exact')
+    const fallbackKeysInput = core
+        .getInput('dependencies-cache-restore-keys')
+        .split('\n')
+        .map(s => s.trim())
+        .filter(x => x !== '')
+
     const cacheKeyPrefix = 'dependencies|'
 
     const args = core.getInput('arguments')
@@ -33,10 +39,13 @@ export async function restoreCachedDependencies(
 
     core.saveState(DEPENDENCIES_CACHE_KEY, cacheKey)
 
+    const fallbackKeys = inputCacheExact
+        ? fallbackKeysInput
+        : fallbackKeysInput.concat([cacheKeyWithArgs, cacheKeyPrefix])
     const cacheResult = await cache.restoreCache(
         [cachePath],
         cacheKey,
-        inputCacheExact ? [] : [cacheKeyWithArgs, cacheKeyPrefix]
+        fallbackKeys
     )
 
     if (!cacheResult) {

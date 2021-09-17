@@ -36,6 +36,9 @@ inputs:
   dependencies-cache-key:
     description: Globs of files to hash in the build root directory, separated by new lines, use best-effort if unset
     required: false
+  dependencies-cache-restore-keys:
+    description: List of fallback keys to use for the dependencies cache if the `dependencies-cache-key` cache misses.
+    required: false
   dependencies-cache-exact:
     description: Whether to restore only if exact match, default to 'false'
     required: false
